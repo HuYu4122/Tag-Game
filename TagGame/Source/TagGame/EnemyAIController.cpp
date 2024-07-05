@@ -84,12 +84,11 @@ void AEnemyAIController::BeginPlay()
 			ATagGameGameMode* AIGameMode = Cast< ATagGameGameMode>(GameMode);
 			const TArray<ASpawnTargetPoint*>& SpawnPointerList = AIGameMode->GetEnemySpawnPointers();
 
-			for (int32 Index = 1; Index < SpawnPointerList.Num(); Index++)
+			for (int32 Index = 0; Index < SpawnPointerList.Num(); Index++)
 			{
-				if (!SpawnPointerList[Index]->IsOccupied && SpawnPointerList[Index]->TypeSpawnPoint == Enemy)
+				if (SpawnPointerList[Index]->TypeSpawnPoint == Enemy && !SpawnPointerList[Index]->IsOccupied)
 				{
 					SpawnPointer = SpawnPointerList[Index];
-					SpawnPointer->IsOccupied = true;
 					return;
 				}
 			}
@@ -108,9 +107,11 @@ void AEnemyAIController::BeginPlay()
 
 	GoToSpawnPoint = MakeShared<FAIVState>(
 		[this](AAIController* AIController) {
-			AIController->MoveToActor(SpawnPointer, 100.f);
+			AIController->MoveToActor(SpawnPointer, 150.f);
 		},
-		nullptr,
+		[this](AAIController* AIController) {
+			SpawnPointer->IsOccupied = true;
+		},
 		[this](AAIController* AIController, const float DeltaTime) -> TSharedPtr<FAIVState> {
 			EPathFollowingStatus::Type State = AIController->GetMoveStatus();
 
@@ -118,9 +119,9 @@ void AEnemyAIController::BeginPlay()
 			{
 				return nullptr;
 			}
-			if (SpawnPointer)
+			if (SpawnPointer->IsOccupied)
 			{
-				SpawnPointer = nullptr;
+				return SearchForSpawnPoint;
 			}
 			return Wait;
 		});
@@ -145,13 +146,11 @@ void AEnemyAIController::BeginPlay()
 		});
 
 	Wait = MakeShared<FAIVState>(
-		[this](AAIController* AIController) {
-			WaitTime = 1.f;
-		},
+		nullptr,
 		nullptr,
 		[this](AAIController* AIController, const float DeltaTime) -> TSharedPtr<FAIVState> {
-			WaitTime += DeltaTime;
-			if (WaitTime >= 1.f)
+			ATagGameGameMode* GameMode = Cast<ATagGameGameMode>(GetWorld()->GetAuthGameMode());
+			if (GameMode->GamePhase == EGamePhase::PlayPhase)
 			{
 				return SearchForBall;
 			}

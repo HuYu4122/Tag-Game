@@ -35,16 +35,27 @@ void ATagGameGameMode::Tick(const float DeltaTime)
 		}
 	}
 
-	ResetMatch();
+	GamePhase = EGamePhase::WaitPhase;
+	if (GamePhase == EGamePhase::WaitPhase)
+	{
+		bool CanReset = true;
+		for (int32 Index = 0; Index < SpawnPointers.Num(); Index++)
+		{
+			if (SpawnPointers[Index]->TypeSpawnPoint == ESpawnPoint::Enemy && !SpawnPointers[Index]->IsOccupied)
+			{
+				CanReset = false;
+			}
+		}
+		if (CanReset)
+		{
+			ResetMatch();
+		}
+	}
 }
 
 void ATagGameGameMode::ResetMatch()
 {
-	/*TargetPoints.Empty();
-	for (TActorIterator<ATargetPoint> It(GetWorld()); It; ++It)
-	{
-		TargetPoints.Add(*It);
-	}*/
+	GamePhase = EGamePhase::PlayPhase;
 
 	SpawnPointers.Empty();
 	for (TActorIterator<ASpawnTargetPoint> It(GetWorld()); It; ++It)

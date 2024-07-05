@@ -8,6 +8,13 @@
 #include "GameFramework/GameModeBase.h"
 #include "TagGameGameMode.generated.h"
 
+UENUM(BlueprintType)
+enum EGamePhase
+{
+	WaitPhase UMETA(DisplayName = "Ball"),
+	PlayPhase UMETA(DisplayName = "Enemy"),
+};
+
 UCLASS(minimalapi)
 class ATagGameGameMode : public AGameModeBase
 {
@@ -27,6 +34,7 @@ public:
 
 	const TArray<ABallActor*> GetBalls() const;
 	const TArray<ASpawnTargetPoint*> GetEnemySpawnPointers() const;
+	EGamePhase GamePhase;
 };
 
 
